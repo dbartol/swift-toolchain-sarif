@@ -50,7 +50,7 @@ public final class Run: JSONRepresentable<RunRecord> {
   ) throws {
     self.columnKind = record.columnKind
     self.baselineGuid = record.baselineGuid
-    
+
     let artifactMap = ArtifactLoadMap(sink: sink)
     let artifactDefaults = try RunContext(from: record, sink: sink)
     self.artifacts = try (record.artifacts ?? []).enumerated().map {
