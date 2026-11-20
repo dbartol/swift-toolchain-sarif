@@ -10,6 +10,12 @@ public final class Tool: JSONRepresentable<ToolRecord> {
   public var driver: ToolComponent
   public var extensions: [ToolComponent] = []
 
+  /// An array of all of the ``ToolComponent``s for this tool, including
+  /// the driver and all extensions.
+  public var allToolComponents: [ToolComponent] {
+    [self.driver] + self.extensions
+  }
+
   public convenience init(driverName: String) {
     self.init(driver: ToolComponent(named: driverName))
   }

@@ -132,7 +132,40 @@
                   "name": "def",
                   "kind": "other"
                 }
+              ],
+              "annotations": [
+                {
+                  "endColumn": 16,
+                  "endLine": 3,
+                  "startColumn": 16,
+                  "startLine": 3
+                },
+                {
+                  "endColumn": 18,
+                  "endLine": 3,
+                  "startColumn": 18,
+                  "startLine": 3
+                }
               ]
+            }
+          ],
+          "relatedLocations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "index": 0,
+                  "uri": "file:///Volumes/LocalData/Code/Private/Repro/test.cpp"
+                },
+                "region": {
+                  "endColumn": 1,
+                  "endLine": 1,
+                  "startColumn": 1,
+                  "startLine": 1
+                }
+              },
+              "message": {
+                "text": "See here"
+              }
             }
           ],
           "message": {

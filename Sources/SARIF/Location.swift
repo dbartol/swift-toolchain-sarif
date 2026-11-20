@@ -9,7 +9,7 @@ internal struct LocationSaveContext {
   let logicalLocations: LogicalLocationSaveMap
 }
 
-public struct Location: JSONRepresentableWithContext<LocationRecord> {
+public final class Location: JSONRepresentableWithContext<LocationRecord> {
   public struct DefaultSortKey: Comparable, SpaceshipComparable {
     private let physicalLocation: PhysicalLocation.DefaultSortKey?
 
@@ -30,19 +30,23 @@ public struct Location: JSONRepresentableWithContext<LocationRecord> {
   public var physicalLocation: PhysicalLocation?
   public var logicalLocations: [LogicalLocation]
   public var message: Message?
+  public var annotations: [Region]
+
   public var defaultSortKey: DefaultSortKey { .init(for: self) }
 
   public init(
     at physicalLocation: PhysicalLocation? = nil,
     logicalLocations: [LogicalLocation] = [],
-    message: Message? = nil
+    message: Message? = nil,
+    annotations: [Region] = []
   ) {
     self.physicalLocation = physicalLocation
     self.logicalLocations = logicalLocations
     self.message = message
+    self.annotations = annotations
   }
 
-  public init(
+  public convenience init(
     at region: Region,
     in artifact: Artifact
   ) {
@@ -51,14 +55,14 @@ public struct Location: JSONRepresentableWithContext<LocationRecord> {
       at: PhysicalLocation(artifactLocation: artifactLocation, region: region))
   }
 
-  public init(
+  public convenience init(
     at textRegion: TextRegion,
     in artifact: Artifact
   ) {
     self.init(at: Region(text: textRegion), in: artifact)
   }
 
-  public init(
+  public convenience init(
     startLine: Int32, startColumn: Int32? = nil, endLine: Int32? = nil,
     endColumn: Int32? = nil, in artifact: Artifact
   ) {
@@ -83,7 +87,10 @@ public struct Location: JSONRepresentableWithContext<LocationRecord> {
       try logicalLocations.resolveOrCreate(from: record)
     }
     self.message = try record.message.map { try .init(from: $0, sink: sink) }
-    try $record.forbid(\.annotations, message: "'annotations' NYI.")
+    self.annotations = try (record.annotations ?? []).map { record in
+      try Region(from: record, sink: sink)
+    }
+
     try $record.forbid(\.relationships, message: "'relationships' NYI.")
   }
 
@@ -99,7 +106,7 @@ public struct Location: JSONRepresentableWithContext<LocationRecord> {
         context.logicalLocations.makeReferenceJSON(to: logicalLocation)
       },
       message: try self.message.toJSON(),
-      annotations: nil,  // FIXME
+      annotations: try self.annotations.ifNotEmpty?.map { try $0.toJSON() },
       relationships: nil  // FIXME
     )
   }

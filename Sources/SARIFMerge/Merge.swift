@@ -210,7 +210,11 @@ extension Result: MergeableWithIdentity {
   }
 
   internal struct MergeState: MergeStateProtocolWithContext<Result> {
-    func merge(merger: inout PropertyMerger<Result>, with context: Context)
+    private var relatedLocations = ArrayMerger<Location, Result>()
+
+    mutating func merge(
+      merger: inout PropertyMerger<Result>, with context: Context
+    )
       throws
     {
       let output = merger.output
@@ -224,6 +228,9 @@ extension Result: MergeableWithIdentity {
         return location
       }
       try merger.keepFirst(keys: \.message)
+      try self.relatedLocations.merge(
+        key: \.relatedLocations, merger: &merger, with: context.locationContext
+      ) { _ in Location() }
     }
   }
 }
@@ -381,7 +388,7 @@ extension PhysicalLocation: Mergeable {
   }
 }
 
-extension Location: Mergeable {
+extension Location: MergeableWithIdentity {
   struct Context {
     let artifacts: ReferenceMergeMap<Artifact>
     let logicalLocations: ReferenceMergeMap<LogicalLocation>
@@ -404,12 +411,17 @@ extension Location: Mergeable {
   }
 
   internal struct MergeState: MergeStateProtocolWithContext<Location> {
-    func merge(merger: inout PropertyMerger<Location>, with context: Context)
+    private var annotations = ArrayMerger<Region, Location>()
+
+    mutating func merge(
+      merger: inout PropertyMerger<Location>, with context: Context
+    )
       throws
     {
       try merger.mergeFirst(key: \.physicalLocation, with: context.artifacts) {
         PhysicalLocation()
       }
+      try merger.keepFirstSpecified(keys: \.message)
       try merger.keepFirstReferences(key: \.logicalLocations) { inputLocation in
         if context.inputSharedLogicalLocations.contains(inputLocation) {
           // This logicalLocation was in the `run.logicalLocations` array, so we
@@ -425,6 +437,8 @@ extension Location: Mergeable {
               from: inputLocation.parent))
         }
       }
+
+      try self.annotations.merge(key: \.annotations, merger: &merger) { $0 }
     }
   }
 }
